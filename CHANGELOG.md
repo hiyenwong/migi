@@ -13,6 +13,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Multiple timestamp format support (RFC3339, NaiveDateTime, Unix epoch)
 - Case-insensitive log level mapping with sensible defaults
 - Automatic ResourceAlert generation when CPU/memory exceeds threshold
+- StatisticalLearner anomaly detection with Z-score baseline frequency analysis (8 tests)
+- System topology inference — auto-discovers subsystems from event patterns
+- BaselineStats with sliding window for progressive anomaly detection
 
 ## [0.1.0] - 2026-05-20
 
