@@ -16,6 +16,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - StatisticalLearner anomaly detection with Z-score baseline frequency analysis (8 tests)
 - System topology inference — auto-discovers subsystems from event patterns
 - BaselineStats with sliding window for progressive anomaly detection
+- TrustManager state persistence to disk (atomic write via temp+rename)
+- Trust blacklist (blocked_targets) alongside whitelist
+- ShellInterventionStrategy: async subprocess execution with history tracking (6 tests)
+- HttpInterventionStrategy: HTTP-based intervention with error handling (1 test)
+- Action.needs_rollback() for intelligent rollback decisions
+- 19 new tests for Trust (persistence, transitions, authorization, blacklist)
+- 9 new tests for Intervener (shell commands, HTTP, rollback, strategies)
 
 ## [0.1.0] - 2026-05-20
 
