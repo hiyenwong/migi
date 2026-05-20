@@ -1,0 +1,33 @@
+[package]
+name = "migi"
+version = "0.1.0"
+edition = "2021"
+authors = ["Hi Yen Wong"]
+description = "A symbiotic AI agent that parasitically integrates into existing systems — observing, learning, and selectively intervening when needed. Named after Migi (右) from Parasyte."
+license = "MIT"
+repository = "https://github.com/hiyenwong/migi"
+rust-version = "1.70"
+
+[[bin]]
+name = "migi"
+path = "src/main.rs"
+
+[lib]
+name = "migi"
+path = "src/lib.rs"
+
+[dependencies]
+serde = { version = "1.0", features = ["derive"] }
+serde_json = "1.0"
+tokio = { version = "1", features = ["full"] }
+tracing = "0.1"
+tracing-subscriber = { version = "0.3", features = ["env-filter"] }
+thiserror = "1.0"
+reqwest = { version = "0.12", features = ["json", "stream"] }
+async-trait = "0.1"
+chrono = { version = "0.4", features = ["serde"] }
+uuid = { version = "1", features = ["v4", "serde"] }
+toml = "0.8"
+
+[dev-dependencies]
+tokio-test = "0.4"
