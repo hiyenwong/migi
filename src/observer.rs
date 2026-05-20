@@ -9,6 +9,12 @@
 //! - 网络流量 (packet metadata)
 //! - 文件变更 (filesystem events)
 
+pub mod log_observer;
+pub mod metrics_observer;
+
+pub use log_observer::LogObserver;
+pub use metrics_observer::MetricsObserver;
+
 use crate::error::MigiResult;
 use async_trait::async_trait;
 use serde::{Deserialize, Serialize};

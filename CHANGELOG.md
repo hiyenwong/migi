@@ -8,14 +8,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
-- `LogObserver`: log file tailing observer with structured parsing
-- `MetricsObserver`: HTTP metrics polling observer with resource threshold detection
-- StatisticalLearner anomaly detection with baseline frequency analysis
-- TrustManager state persistence to disk
-- `ShellInterventionStrategy`: subprocess-based intervention execution
-- `HttpInterventionStrategy`: HTTP-based intervention with automatic rollback
-- TOML configuration loading with default fallback
-- Main event loop integrating all four layers
+- `LogObserver`: async log file tailing with structured timestamp/severity parsing (15 tests)
+- `MetricsObserver`: HTTP metrics polling with resource threshold detection (9 tests)
+- Multiple timestamp format support (RFC3339, NaiveDateTime, Unix epoch)
+- Case-insensitive log level mapping with sensible defaults
+- Automatic ResourceAlert generation when CPU/memory exceeds threshold
 
 ## [0.1.0] - 2026-05-20
 
