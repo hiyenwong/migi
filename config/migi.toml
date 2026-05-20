@@ -1,0 +1,18 @@
+# Migi Configuration Template
+
+name = "migi"
+phase = "observation"  # observation | assistance | local_takeover | controlled_transition
+
+# 宿主观察端点
+host_observation_endpoints = [
+    "/var/log/syslog",
+]
+
+# 允许介入的目标
+allowed_intervention_targets = ["database", "cache"]
+
+# 信任阈值：模型误差低于此值时考虑相变
+trust_threshold = 0.05
+
+# 最大并发介入数
+max_concurrent_interventions = 1

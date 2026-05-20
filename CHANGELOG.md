@@ -23,6 +23,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Action.needs_rollback() for intelligent rollback decisions
 - 19 new tests for Trust (persistence, transitions, authorization, blacklist)
 - 9 new tests for Intervener (shell commands, HTTP, rollback, strategies)
+- TOML configuration loading with default fallback (4 tests)
+- Main event loop integrating all four layers (Phase 6)
 
 ## [0.1.0] - 2026-05-20
 

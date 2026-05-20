@@ -1,28 +1,23 @@
 /// Configuration for Migi agent
+use crate::error::{MigiError, MigiResult};
 use serde::{Deserialize, Serialize};
+use std::path::Path;
 
-/// 共生阶段 — 定义了 Agent 当前的信任等级和操作权限
 #[derive(Debug, Clone, Copy, Serialize, Deserialize, PartialEq, Eq, Default)]
 #[serde(rename_all = "snake_case")]
 pub enum SymbiosisPhase {
-    /// 阶段 1: 观察期 — 只读权限，学习系统行为
     #[default]
     Observation,
-    /// 阶段 2: 辅助期 — 提供建议，自动修复已知模式
     Assistance,
-    /// 阶段 3: 局部接管 — 在隔离环境中获得写权限
     LocalTakeover,
-    /// 阶段 4: 受控相变 — 逐步扩大接管范围
     ControlledTransition,
 }
 
 impl SymbiosisPhase {
-    /// 判断是否可以读取宿主数据
     pub fn can_read(&self) -> bool {
-        true // 所有阶段都有读权限
+        true
     }
 
-    /// 判断是否可以提供建议
     pub fn can_suggest(&self) -> bool {
         matches!(
             self,
@@ -30,30 +25,23 @@ impl SymbiosisPhase {
         )
     }
 
-    /// 判断是否可以写入（在隔离环境中）
     pub fn can_write_isolated(&self) -> bool {
         matches!(self, Self::LocalTakeover | Self::ControlledTransition)
     }
 
-    /// 判断是否可以完全接管
     pub fn can_takeover(&self) -> bool {
         matches!(self, Self::ControlledTransition)
     }
 }
 
+/// 配置
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct MigiConfig {
-    /// Agent 名称
     pub name: String,
-    /// 当前共生阶段
     pub phase: SymbiosisPhase,
-    /// 宿主系统的观察端点（日志流、API、sidecar 等）
     pub host_observation_endpoints: Vec<String>,
-    /// 允许介入的子系统列表（空 = 全部禁止）
     pub allowed_intervention_targets: Vec<String>,
-    /// 信任阈值：模型误差低于此值时考虑相变
     pub trust_threshold: f64,
-    /// 最大并发介入数
     pub max_concurrent_interventions: usize,
 }
 
@@ -67,5 +55,101 @@ impl Default for MigiConfig {
             trust_threshold: 0.05,
             max_concurrent_interventions: 1,
         }
+    }
+}
+
+impl MigiConfig {
+    /// 从 TOML 文件加载配置
+    pub fn from_file(path: &Path) -> MigiResult<Self> {
+        let content = std::fs::read_to_string(path).map_err(|e| {
+            MigiError::Config(format!(
+                "failed to read config file '{}': {e}",
+                path.display()
+            ))
+        })?;
+
+        let config: MigiConfig = toml::from_str(&content)
+            .map_err(|e| MigiError::Config(format!("failed to parse config file: {e}")))?;
+
+        tracing::info!(
+            name = %config.name,
+            phase = ?config.phase,
+            endpoints = config.host_observation_endpoints.len(),
+            allowed_targets = config.allowed_intervention_targets.len(),
+            "configuration loaded"
+        );
+
+        Ok(config)
+    }
+
+    /// 尝试从文件加载，失败时使用默认配置
+    pub fn load_or_default(path: &Path) -> Self {
+        match Self::from_file(path) {
+            Ok(config) => config,
+            Err(e) => {
+                tracing::warn!(error = %e, "falling back to default configuration");
+                Self::default()
+            }
+        }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_default_config() {
+        let config = MigiConfig::default();
+        assert_eq!(config.name, "migi");
+        assert_eq!(config.phase, SymbiosisPhase::Observation);
+        assert!(config.host_observation_endpoints.is_empty());
+        assert!(config.allowed_intervention_targets.is_empty());
+        assert_eq!(config.trust_threshold, 0.05);
+        assert_eq!(config.max_concurrent_interventions, 1);
+    }
+
+    #[test]
+    fn test_load_or_default_missing_file() {
+        let config = MigiConfig::load_or_default(Path::new("/nonexistent/migi.toml"));
+        assert_eq!(config.name, "migi");
+        assert_eq!(config.phase, SymbiosisPhase::Observation);
+    }
+
+    #[test]
+    fn test_load_or_default_valid_file() {
+        let temp_dir = std::env::temp_dir();
+        let config_file = temp_dir.join("migi_test_config.toml");
+        let toml_content = r#"
+name = "test-migi"
+phase = "assistance"
+host_observation_endpoints = ["/var/log/syslog"]
+allowed_intervention_targets = ["db", "cache"]
+trust_threshold = 0.1
+max_concurrent_interventions = 3
+"#;
+        std::fs::write(&config_file, toml_content).unwrap();
+
+        let config = MigiConfig::load_or_default(&config_file);
+        assert_eq!(config.name, "test-migi");
+        assert_eq!(config.phase, SymbiosisPhase::Assistance);
+        assert_eq!(config.host_observation_endpoints, vec!["/var/log/syslog"]);
+        assert_eq!(config.allowed_intervention_targets, vec!["db", "cache"]);
+        assert_eq!(config.trust_threshold, 0.1);
+        assert_eq!(config.max_concurrent_interventions, 3);
+
+        let _ = std::fs::remove_file(&config_file);
+    }
+
+    #[test]
+    fn test_from_file_invalid_toml() {
+        let temp_dir = std::env::temp_dir();
+        let config_file = temp_dir.join("migi_invalid.toml");
+        std::fs::write(&config_file, "this is not toml {{{").unwrap();
+
+        let result = MigiConfig::from_file(&config_file);
+        assert!(result.is_err());
+
+        let _ = std::fs::remove_file(&config_file);
     }
 }
