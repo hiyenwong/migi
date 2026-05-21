@@ -31,6 +31,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Sandbox simulation system with 4 scenarios (7 tests)
 - `migi-sim` CLI for running simulations: baseline, anomaly, transition, lifecycle
 - Updated design philosophy with 4-stage ultimate goal (adaptive learning → host education → graceful dormancy)
+- Real-time monitoring system with JSON state snapshots (3 tests)
+- `migi-stats` CLI: view current state, --watch mode, --history, --json output
+- Migi daemon writes state snapshots to `var/migi-state.json` every 5 iterations
+- Sandbox supports `--monitor` flag to write snapshots for external observation
 
 ## [0.1.0] - 2026-05-20
 

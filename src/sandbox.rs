@@ -6,10 +6,12 @@
 use crate::error::MigiResult;
 use crate::intervener::{Intervener, InterventionTrigger, ShellInterventionStrategy};
 use crate::learner::{Learner, Predictions, StatisticalLearner};
+use crate::monitor::{MigiSnapshot, MonitorHistory};
 use crate::observer::{EventType, HostEvent, ObservationChannel, Observer, Severity};
 use crate::trust::TrustManager;
 use async_trait::async_trait;
 use serde::{Deserialize, Serialize};
+use std::path::Path;
 use std::time::SystemTime;
 
 // ─── 场景定义 ───────────────────────────────────────────
@@ -689,13 +691,54 @@ impl Sandbox {
         })
     }
 
-    /// 运行完整场景
-    pub fn run_scenario(mut self, scenario: &Scenario) -> MigiResult<SimResult> {
+    /// 运行完整场景（无监测快照，兼容旧接口）
+    pub fn run_scenario(self, scenario: &Scenario) -> MigiResult<SimResult> {
+        self.run_scenario_with_monitor(scenario, None, None)
+    }
+
+    /// 运行完整场景，并可选的写入监测快照
+    pub fn run_scenario_with_monitor(
+        mut self,
+        scenario: &Scenario,
+        state_path: Option<&Path>,
+        history_path: Option<&Path>,
+    ) -> MigiResult<SimResult> {
+        let start_time = std::time::Instant::now();
         let mut logs = Vec::new();
+        let mut history = MonitorHistory::new(100);
+        let mut snap_counter: u64 = 0;
 
         for (i, round) in scenario.rounds.iter().enumerate() {
             let log = self.run_round(round, i)?;
             logs.push(log);
+
+            // Write snapshots every 3 rounds
+            snap_counter += 1;
+            if snap_counter % 3 == 0 {
+                if let Some(sp) = state_path {
+                    let model = self.learner.get_model().clone();
+                    let snap = MigiSnapshot::take(
+                        self.trust.phase(),
+                        self.trust.state(),
+                        &model,
+                        start_time,
+                    );
+                    let _ = snap.save(sp);
+                    history.push(snap);
+                }
+            }
+        }
+
+        if let Some(hp) = history_path {
+            let _ = history.save(hp);
+        }
+
+        // Final snapshot
+        if let Some(sp) = state_path {
+            let model = self.learner.get_model().clone();
+            let snap =
+                MigiSnapshot::take(self.trust.phase(), self.trust.state(), &model, start_time);
+            let _ = snap.save(sp);
         }
 
         let final_model = self.learner.get_model().clone();

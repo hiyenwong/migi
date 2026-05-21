@@ -29,6 +29,7 @@ pub mod config;
 pub mod error;
 pub mod intervener;
 pub mod learner;
+pub mod monitor;
 pub mod observer;
 pub mod sandbox;
 pub mod secrets;

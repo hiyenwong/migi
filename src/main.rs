@@ -7,6 +7,7 @@ use migi::config::MigiConfig;
 use migi::error::MigiResult;
 use migi::intervener::{Intervener, Intervention, InterventionTrigger};
 use migi::learner::{Learner, StatisticalLearner};
+use migi::monitor::{MigiSnapshot, MonitorHistory};
 use migi::observer::{LogObserver, MetricsObserver, Observer};
 use migi::trust::TrustManager;
 use std::path::Path;
@@ -60,6 +61,14 @@ async fn main() -> MigiResult<()> {
     // 初始化行动层
     let mut intervener = Intervener::new();
     intervener.register_strategy(migi::intervener::ShellInterventionStrategy::new());
+
+    // 初始化监测
+    let state_path = Path::new("var/migi-state.json");
+    let history_path = Path::new("var/migi-history.json");
+    let start_time = std::time::Instant::now();
+    let mut history = MonitorHistory::new(100);
+    let mut snapshot_counter: u64 = 0;
+    std::fs::create_dir_all("var").ok();
 
     tracing::info!(channels = 2, "all layers initialized");
 
@@ -167,6 +176,16 @@ async fn main() -> MigiResult<()> {
         // 5. 持久化信任状态（定期）
         if observer.event_count() % 100 == 0 {
             let _ = trust.save_state();
+        }
+
+        // 6. 监测：写入状态快照（每 5 轮）
+        snapshot_counter += 1;
+        if snapshot_counter % 5 == 0 {
+            let model = learner.get_model();
+            let snap = MigiSnapshot::take(trust.phase(), trust.state(), model, start_time);
+            let _ = snap.save(state_path);
+            history.push(snap);
+            let _ = history.save(history_path);
         }
     }
 }

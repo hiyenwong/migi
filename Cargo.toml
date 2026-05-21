@@ -20,6 +20,10 @@ path = "src/bin/migi-secrets.rs"
 name = "migi-sim"
 path = "src/bin/migi-sim.rs"
 
+[[bin]]
+name = "migi-stats"
+path = "src/bin/migi-stats.rs"
+
 [lib]
 name = "migi"
 path = "src/lib.rs"

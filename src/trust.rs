@@ -308,6 +308,10 @@ impl TrustManager {
         &self.state
     }
 
+    pub fn phase(&self) -> &SymbiosisPhase {
+        &self.state.phase
+    }
+
     pub fn allowed_targets(&self) -> &[String] {
         &self.allowed_targets
     }

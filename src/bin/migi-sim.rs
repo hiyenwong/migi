@@ -1,16 +1,7 @@
 //! migi-sim — 沙盒模拟运行器
-//!
-//! 在隔离环境中模拟宿主系统行为，测试 Migi 的完整生命周期。
-//!
-//! 用法:
-//!   migi-sim baseline          正常基线场景
-//!   migi-sim anomaly           异常检测场景（正常→异常→恢复）
-//!   migi-sim transition        相变测试场景
-//!   migi-sim lifecycle         完整生命周期场景
-//!   migi-sim list              列出所有场景
-//!   migi-sim all               运行所有场景
 
 use migi::sandbox::{Sandbox, Scenario};
+use std::path::Path;
 use std::time::Instant;
 
 fn list_scenarios() {
@@ -25,27 +16,36 @@ fn main() {
     let args: Vec<String> = std::env::args().collect();
 
     if args.len() < 2 {
-        println!("Usage: migi-sim <scenario>");
+        println!("Usage: migi-sim [--monitor] <scenario>");
         println!();
         list_scenarios();
         std::process::exit(1);
     }
 
-    match args[1].as_str() {
-        "list" => {
-            list_scenarios();
-        }
+    let monitor = args[1] == "--monitor" || args[2..].contains(&"--monitor".to_string());
+    let scenario_name = if args[1] == "--monitor" || args[1] == "--state-file" {
+        args[2..]
+            .iter()
+            .find(|a| !a.starts_with("--"))
+            .cloned()
+            .unwrap_or_else(|| "baseline".into())
+    } else {
+        args[1].clone()
+    };
+
+    match scenario_name.as_str() {
+        "list" => list_scenarios(),
         "baseline" | "normal" => {
-            run_scenario("baseline", &Scenario::baseline());
+            run_scenario("baseline", &Scenario::baseline(), monitor);
         }
         "anomaly" | "anomaly-detection" => {
-            run_scenario("anomaly-detection", &Scenario::anomaly_detection());
+            run_scenario("anomaly-detection", &Scenario::anomaly_detection(), monitor);
         }
         "transition" | "phase-transition" => {
-            run_scenario("phase-transition", &Scenario::phase_transition());
+            run_scenario("phase-transition", &Scenario::phase_transition(), monitor);
         }
         "lifecycle" | "full-lifecycle" => {
-            run_scenario("full-lifecycle", &Scenario::full_lifecycle());
+            run_scenario("full-lifecycle", &Scenario::full_lifecycle(), monitor);
         }
         "all" | "full" => {
             let scenarios = [
@@ -55,18 +55,18 @@ fn main() {
                 ("full-lifecycle", Scenario::full_lifecycle()),
             ];
             for (name, scenario) in &scenarios {
-                run_scenario(name, scenario);
+                run_scenario(name, scenario, monitor);
             }
         }
         _ => {
-            eprintln!("Unknown scenario: {}", args[1]);
+            eprintln!("Unknown scenario: {}", scenario_name);
             list_scenarios();
             std::process::exit(1);
         }
     }
 }
 
-fn run_scenario(name: &str, scenario: &Scenario) {
+fn run_scenario(name: &str, scenario: &Scenario, monitor: bool) {
     println!(
         "\n  🚀 Running scenario: {} — {}",
         name, scenario.description
@@ -74,12 +74,27 @@ fn run_scenario(name: &str, scenario: &Scenario) {
 
     let start = Instant::now();
 
+    let state_path = if monitor {
+        Some(Path::new("var/migi-state.json"))
+    } else {
+        None
+    };
+    let history_path = if monitor {
+        Some(Path::new("var/migi-history.json"))
+    } else {
+        None
+    };
+
+    if monitor {
+        let _ = std::fs::create_dir_all("var");
+    }
+
     let sandbox = Sandbox::new("sim", 0.05)
         .with_log_channel(scenario)
         .with_metrics_channel()
         .with_shell_strategy();
 
-    let result = match sandbox.run_scenario(scenario) {
+    let result = match sandbox.run_scenario_with_monitor(scenario, state_path, history_path) {
         Ok(r) => r,
         Err(e) => {
             eprintln!("\n  ❌ Scenario failed: {}\n", e);
@@ -88,9 +103,12 @@ fn run_scenario(name: &str, scenario: &Scenario) {
     };
 
     let elapsed = start.elapsed();
-
     Sandbox::print_summary(&result);
-
     println!("  Duration:     {:?}", elapsed);
+
+    if monitor {
+        println!("  💾 State snapshot written to var/migi-state.json");
+        println!("  💾 History written to var/migi-history.json");
+    }
     println!();
 }
