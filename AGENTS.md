@@ -37,12 +37,12 @@ main (入口)
 
 | 域 | 路径 | 设计文档 | 状态 |
 |----|------|----------|------|
-| config | `src/config.rs` | — | 骨架 |
-| error | `src/error.rs` | — | 骨架 |
-| observer | `src/observer.rs` | [docs/architecture/overview.md](docs/architecture/overview.md) | 骨架 |
-| learner | `src/learner.rs` | [docs/architecture/overview.md](docs/architecture/overview.md) | 骨架 |
-| intervener | `src/intervener.rs` | [docs/architecture/overview.md](docs/architecture/overview.md) | 骨架 |
-| trust | `src/trust.rs` | [docs/architecture/overview.md](docs/architecture/overview.md) | 骨架 |
+| config | `src/config.rs` | — | 完整实现 |
+| error | `src/error.rs` | — | 完整实现 |
+| observer | `src/observer.rs` | [docs/architecture/overview.md](docs/architecture/overview.md) | 完整实现 (LogObserver + MetricsObserver) |
+| learner | `src/learner.rs` | [docs/architecture/overview.md](docs/architecture/overview.md) | 完整实现 (StatisticalLearner + 异常检测) |
+| intervener | `src/intervener.rs` | [docs/architecture/overview.md](docs/architecture/overview.md) | 完整实现 (Shell + HTTP 策略) |
+| trust | `src/trust.rs` | [docs/architecture/overview.md](docs/architecture/overview.md) | 完整实现 (持久化 + 相变门控) |
 
 ## OpenSpec
 

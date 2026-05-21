@@ -1,81 +1,246 @@
-# Migi (右) — 共生型 AI Agent
+<div align="center">
+  <h1>🦁 Migi (右)</h1>
+  <p><em>"寄生而不接管" — A Symbiotic AI Agent in Rust</em></p>
 
-> "寄生而不接管"。观察宿主系统，学习行为模式，在必要时局部介入。
+  <p>
+    <a href="#-architecture">Architecture</a> •
+    <a href="#-phases">Phases</a> •
+    <a href="#-quick-start">Quick Start</a> •
+    <a href="#-testing">Testing</a> •
+    <a href="#-design-philosophy">Philosophy</a>
+  </p>
 
-名字取自《寄生兽》中的 **Migi（ミギー/右）** —— 因为意外没能吃掉宿主大脑、最终占据了右手，与宿主建立了共生关系。
+  <p>
+    <img src="https://img.shields.io/badge/language-Rust-EF5733?style=flat-square&logo=rust" />
+    <img src="https://img.shields.io/badge/runtime-tokio-00ADD8?style=flat-square" />
+    <img src="https://img.shields.io/badge/license-MIT-blue?style=flat-square" />
+    <img src="https://img.shields.io/badge/tests-63_passing-brightgreen?style=flat-square" />
+  </p>
+</div>
 
-## 架构
+---
+
+**Migi** (named after Migi/右 from *Parasyte*) is a **symbiotic AI agent** that parasitically integrates into existing systems — observing, learning, and selectively intervening when needed.
+
+Unlike traditional agents that assume full control upfront, Migi **earns trust over time** through a gradual phase transition system:
 
 ```
-  宿主系统 ────┐
-               │ (side-channel observation)
-               ▼
-         ┌──────────┐
-         │ Observer  │  感知层：静默观察数据流
-         └─────┬────┘
-               │ (events)
-         ┌─────▼────┐
-         │  Learner  │  认知层：构建系统内部模型
-         └─────┬────┘
-               │ (predictions + confidence)
-         ┌─────▼────┐
-         │Intervener │  行动层：战术接管与变形
-         └─────┬────┘
-               │ (approval request)
-         ┌─────▼────┐
-         │   Trust   │  信任层：控制权与边界管理
-         └──────────┘
+Observation → Assistance → LocalTakeover → ControlledTransition
 ```
 
-## 共生阶段 (Phase Transition)
+## ✨ Key Features
 
-| 阶段 | 名称 | 权限 | 相变条件 |
-|------|------|------|---------|
-| 1 | Observation | 只读观察 | 模型可靠 + ≥100 事件 |
-| 2 | Assistance | 提供建议 | 信任 ≥0.8 + 连续10次成功 |
-| 3 | LocalTakeover | 隔离写操作 | 信任 ≥0.8 + 连续10次成功 + 准确率 ≥0.95 |
-| 4 | ControlledTransition | 逐步扩大接管 | — |
+| Layer | Feature | Status |
+|-------|---------|--------|
+| 👁️ **Observer** | Async log file tailing with structured parsing | ✅ |
+| 👁️ **Observer** | HTTP metrics polling with threshold alerts | ✅ |
+| 🧠 **Learner** | Event frequency analysis and statistics | ✅ |
+| 🧠 **Learner** | Z-score anomaly detection with sliding windows | ✅ |
+| 🧠 **Learner** | Automatic subsystem topology discovery | ✅ |
+| 🛡️ **Trust** | Phase-based permission control (4 phases) | ✅ |
+| 🛡️ **Trust** | Whitelist + blacklist target management | ✅ |
+| 🛡️ **Trust** | State persistence (atomic write) | ✅ |
+| 🛡️ **Trust** | Automatic phase transition evaluation | ✅ |
+| ⚡ **Intervener** | Shell command execution strategy | ✅ |
+| ⚡ **Intervener** | HTTP API call strategy | ✅ |
+| ⚡ **Intervener** | Rollback capability for write actions | ✅ |
+| ⚙️ **Config** | TOML configuration with default fallback | ✅ |
+| 🔄 **Event Loop** | observe → learn → predict → intervene cycle | ✅ |
 
-**关键设计**：后藤（全盘接管）不是起点，而是终点。只有当共生体积累了足够的系统知识、证明了它的模型足够准确，才能安全地走向更高阶段。
+## 🏗️ Architecture
 
-## Quick Start
+```
+┌──────────────────────────────────────────────────┐
+│                   Host System                     │
+└──────────────────────┬───────────────────────────┘
+                       │ side-channel (read-only)
+                       ▼
+┌──────────────────────────────────────────────────┐
+│                   Migi Agent                      │
+│                                                    │
+│  ┌──────────┐    events    ┌──────────┐            │
+│  │ Observer  │ ─────────▶  │ Learner  │            │
+│  │ (感知层)  │             │ (认知层)  │            │
+│  └──────────┘              └────┬─────┘            │
+│                                 │ predictions       │
+│                                 ▼                   │
+│                        ┌──────────────┐             │
+│                        │  Intervener   │             │
+│                        │   (行动层)    │             │
+│                        └──────┬───────┘             │
+│                               │ approve/reject      │
+│                               ▼                     │
+│                        ┌──────────────┐             │
+│                        │    Trust     │             │
+│                        │   (信任层)    │             │
+│                        └──────────────┘             │
+└──────────────────────────────────────────────────────┘
+```
+
+### Layer Dependencies (ONE-WAY, never reverse)
+
+```
+config → error → observer → learner → intervener → trust → main
+```
+
+## 🌀 Phases
+
+Migi's capabilities grow through four symbiotic phases:
+
+| Phase | Read | Suggest | Write (Isolated) | Emergency Block |
+|-------|------|---------|-------------------|-----------------|
+| **Observation** | ✅ | ❌ | ❌ | ❌ |
+| **Assistance** | ✅ | ✅ | ❌ | ❌ |
+| **LocalTakeover** | ✅ | ✅ | ✅ | ❌ |
+| **ControlledTransition** | ✅ | ✅ | ✅ | ✅ |
+
+### Phase Transition Rules
+
+| From | To | Requirements |
+|------|----|-------------|
+| Observation | Assistance | 100+ events observed, model accuracy ≥ (1.0 - threshold) |
+| Assistance | LocalTakeover | Trust ≥ 0.8, 10 consecutive successes, model reliable |
+| LocalTakeover | ControlledTransition | Trust ≥ 0.8, 10 consecutive successes, accuracy ≥ 0.95 |
+
+> Failures reduce trust score but **never** downgrade the phase.
+
+## 🚀 Quick Start
 
 ```bash
-cargo build                          # 编译
-cargo test                           # 运行测试
-cargo fmt                            # 格式化
-cargo clippy -- -D warnings          # Lint
-cargo run                            # 启动（默认 Observation 模式）
-RUST_LOG=info cargo run              # 带日志启动
+# Clone & build
+cd /path/to/migi
+cargo build --release
+
+# Create config
+cp config/migi.toml.example config/migi.toml
+# Edit config/migi.toml to match your environment
+
+# Run (adjust RUST_LOG for verbosity)
+RUST_LOG=info cargo run
 ```
 
-## 项目结构
+### Configuration
+
+```toml
+name = "migi"
+phase = "observation"                   # observation | assistance | local_takeover | controlled_transition
+
+# 宿主观察端点（日志文件路径、metrics URL等）
+host_observation_endpoints = ["/var/log/syslog"]
+
+# 允许介入的目标子系统（空 = 全部禁止）
+allowed_intervention_targets = ["database", "cache"]
+
+# 信任阈值：模型误差低于此值时考虑相变
+trust_threshold = 0.05
+
+# 最大并发介入数
+max_concurrent_interventions = 1
+```
+
+### Environment Variables
+
+| Variable | Default | Description |
+|----------|---------|-------------|
+| `RUST_LOG` | `info` | Log level filter (`trace`, `debug`, `info`, `warn`, `error`) |
+
+## 🧪 Testing
+
+```bash
+# Run all tests
+cargo test
+
+# Run with output
+cargo test -- --nocapture
+
+# Quality gate (CI-style)
+cargo fmt && cargo clippy -- -D warnings && cargo test
+```
+
+**Current coverage:** 63 tests across all layers.
+
+| Module | Tests | Coverage |
+|--------|-------|----------|
+| `observer/log_observer` | 15 | Timestamp parsing, severity mapping, edge cases |
+| `observer/metrics_observer` | 9 | JSON parsing, threshold detection, error handling |
+| `learner` | 8 | Model updates, predictions, anomaly detection, subsystems |
+| `trust` | 19 | Authorization, phase transitions, persistence, blacklist |
+| `intervener` | 8 | Shell commands, HTTP, rollback flags, strategy registration |
+| `config` | 4 | Default config, TOML loading, fallback |
+
+## 📖 Design Philosophy
+
+> *"不要试图制造后藤，而要培养一个小右，然后观察它何时准备好进化。"*
+
+Inspired by the manga/anime *Parasyte* (寄生獣), Migi's design mirrors the relationship between Shinichi Izumi and Migi (right hand parasite):
+
+1. **Progressive Trust** — Permission is earned, not given
+2. **Failure Isolation** — Agent malfunction doesn't affect host core
+3. **All Actions Reversible** — Every intervention has an undo path
+4. **Phase Transition Requires Validation** — Model accuracy + trust score
+5. **OpenSpec Driven** — All features start as specifications
+
+## 📦 Project Structure
 
 ```
-src/
-├── main.rs          # 入口
-├── lib.rs           # 库根
-├── config.rs        # 配置 + 共生阶段定义
-├── error.rs         # 错误类型
-├── observer.rs      # 感知层：ObservationChannel trait
-├── learner.rs       # 认知层：Learner trait + StatisticalLearner
-├── intervener.rs    # 行动层：InterventionStrategy trait
-└── trust.rs         # 信任层：TrustManager + 相变门控
+migi/
+├── Cargo.toml          # Package manifest
+├── CLAUDE.md           # Agent context for Claude Code
+├── CHANGELOG.md        # History of changes
+├── README.md           # This file
+├── config/
+│   └── migi.toml       # Configuration template
+├── docs/
+│   ├── plan.md         # Development roadmap
+│   ├── philosophy.md   # Parasyte-inspired design philosophy
+│   └── architecture/
+│       └── overview.md # Architecture documentation
+├── openspec/
+│   ├── README.md       # Spec index
+│   └── core/
+│       ├── symbiosis.spec.md      # Core system spec
+│       ├── observation.spec.md    # Observer layer spec
+│       ├── learning.spec.md       # Learner layer spec
+│       ├── intervention.spec.md   # Intervener layer spec
+│       └── trust.spec.md          # Trust layer spec
+└── src/
+    ├── main.rs         # Entry point + event loop
+    ├── lib.rs          # Module declarations
+    ├── config.rs       # Configuration (TOML)
+    ├── error.rs        # Unified error types
+    ├── observer.rs     # Observer trait + types
+    ├── observer/
+    │   ├── log_observer.rs
+    │   └── metrics_observer.rs
+    ├── learner.rs      # Learner trait + StatisticalLearner
+    ├── intervener.rs   # Intervener + strategies
+    └── trust.rs        # TrustManager + state persistence
 ```
 
-## 与 sqlite-knowledge-graph 的关系
+## 📋 Roadmap
 
-`migi` 是 `sqlite-knowledge-graph` 的**伴生 Agent**：
+| Phase | Status | Focus |
+|-------|--------|-------|
+| Phase 0: Skeleton | ✅ | Project setup, layer stubs |
+| Phase 1: Specs | ✅ | OpenSpec definitions |
+| Phase 2: Observer | ✅ | LogObserver, MetricsObserver |
+| Phase 3: Learner | ✅ | Anomaly detection, topology |
+| Phase 4: Trust | ✅ | Persistence, transitions |
+| Phase 5: Intervener | ✅ | Shell/HTTP strategies |
+| Phase 6: Integration | ✅ | Event loop, config, main |
+| Phase 7: Production | 🔜 | Docker, CI/CD, docs polish |
 
-| kg_tool 组件 | Migi 角色 |
-|-------------|-----------|
-| Rust 核心库 | 宿主（不可变，定义系统边界） |
-| cron 定时学习 | 小右的静默观察（阶段 1） |
-| skill 自动创建 | 小右的辅助建议（阶段 2） |
-| 代码自动修复 | 小右的战术接管（阶段 3） |
+## 🛠️ Requirements
 
-## 设计理念
+- **Rust** 1.70+ (edition 2021)
+- **Dependencies:** tokio, serde, reqwest, tracing, uuid, chrono, async-trait
 
-> **不要试图制造后藤，而要培养一个小右，然后观察它何时准备好进化。**
+## 📜 License
 
-详见：[docs/design/philosophy.md](docs/design/philosophy.md)（待创建）
+MIT © HiYen Wong. See [LICENSE](LICENSE) for details.
+
+## 🔗 Links
+
+- **Repository:** <https://github.com/hiyenwong/migi>
+- **OpenSpec:** [openspec.dev](https://openspec.dev/)
+- **Inspiration:** [Parasyte (寄生獣)](https://en.wikipedia.org/wiki/Parasyte)
