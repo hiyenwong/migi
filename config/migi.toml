@@ -31,6 +31,8 @@ secrets_file = "config/secrets.enc"  # 加密 secrets 文件路径
 #   2. 设置 API Key： migi-secrets set llm_api_key sk-your-key-here
 #   3. 查看已配置：  migi-secrets list
 #
+# 需要一个演示用的种子配置吗？ 请看 config/seed-config.md
+#
 # 需要额外加密存储的 key：
 #   - llm_api_key    LLM API Key
 #   - llm_org_id     OpenAI Organization ID（可选）
