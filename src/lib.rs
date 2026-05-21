@@ -30,6 +30,8 @@ pub mod error;
 pub mod intervener;
 pub mod learner;
 pub mod observer;
+pub mod sandbox;
+pub mod secrets;
 pub mod trust;
 
 pub use error::{MigiError, MigiResult};

@@ -25,6 +25,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - 9 new tests for Intervener (shell commands, HTTP, rollback, strategies)
 - TOML configuration loading with default fallback (4 tests)
 - Main event loop integrating all four layers (Phase 6)
+- Encrypted secrets management with AES-256-GCM (6 tests)
+- `migi-secrets` CLI for managing encrypted API keys and config
+- TOML config with optional LLM section for provider/model/endpoint
+- Sandbox simulation system with 4 scenarios (7 tests)
+- `migi-sim` CLI for running simulations: baseline, anomaly, transition, lifecycle
+- Updated design philosophy with 4-stage ultimate goal (adaptive learning → host education → graceful dormancy)
 
 ## [0.1.0] - 2026-05-20
 

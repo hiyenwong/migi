@@ -16,3 +16,21 @@ trust_threshold = 0.05
 
 # 最大并发介入数
 max_concurrent_interventions = 1
+
+# LLM 配置（可选 — 留空则使用纯统计学习模式）
+[llm]
+provider = "openai"         # openai | anthropic | custom
+model = "gpt-4o"            # 模型名称
+endpoint = ""               # 自定义 API 端点（留空用官方 API）
+secrets_file = "config/secrets.enc"  # 加密 secrets 文件路径
+
+# 敏感信息（如 API Key）不直接写在此文件。
+# 使用 migi-secrets CLI 工具加密存储：
+#
+#   1. 生成主密钥： export MIGI_MASTER_KEY=$(migi-secrets gen-key)
+#   2. 设置 API Key： migi-secrets set llm_api_key sk-your-key-here
+#   3. 查看已配置：  migi-secrets list
+#
+# 需要额外加密存储的 key：
+#   - llm_api_key    LLM API Key
+#   - llm_org_id     OpenAI Organization ID（可选）

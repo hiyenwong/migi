@@ -43,6 +43,33 @@ pub struct MigiConfig {
     pub allowed_intervention_targets: Vec<String>,
     pub trust_threshold: f64,
     pub max_concurrent_interventions: usize,
+    /// LLM 配置（可选）
+    #[serde(default)]
+    pub llm: LlmConfig,
+}
+
+/// LLM 配置
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct LlmConfig {
+    /// LLM 提供商: openai, anthropic, custom
+    pub provider: String,
+    /// 模型名称
+    pub model: String,
+    /// 自定义 API 端点
+    pub endpoint: String,
+    /// 加密 secrets 文件路径
+    pub secrets_file: String,
+}
+
+impl Default for LlmConfig {
+    fn default() -> Self {
+        Self {
+            provider: String::new(),
+            model: String::new(),
+            endpoint: String::new(),
+            secrets_file: "config/secrets.enc".to_string(),
+        }
+    }
 }
 
 impl Default for MigiConfig {
@@ -54,6 +81,7 @@ impl Default for MigiConfig {
             allowed_intervention_targets: vec![],
             trust_threshold: 0.05,
             max_concurrent_interventions: 1,
+            llm: LlmConfig::default(),
         }
     }
 }
